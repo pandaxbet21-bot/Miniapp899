@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Telegram Level App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #222222;
+            --tg-theme-button-color: #40a7e3;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f1f1f1;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --tg-theme-bg-color: #212121;
+                --tg-theme-text-color: #ffffff;
+                --tg-theme-button-color: #40a7e3;
+                --tg-theme-button-text-color: #ffffff;
+                --tg-theme-secondary-bg-color: #181818;
+            }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-card {
+            background-color: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin-right: 16px;
+            background-color: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .level-badge {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .levels-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .level-card {
+            background-color: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .level-card.active {
+            box-shadow: 0 0 0 2px var(--tg-theme-button-color);
+        }
+
+        .level-card.locked {
+            opacity: 0.6;
+        }
+
+        .level-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .level-name {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .level-price {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .upgrade-button {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: opacity 0.3s;
+        }
+
+        .upgrade-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--tg-theme-bg-color);
+            padding: 24px;
+            border-radius: 12px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .modal-button {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-button.primary {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+
+        .modal-button.secondary {
+            background-color: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Level Up App</h1>
+            <p>আপনার লেভেল আপগ্রেড করুন এবং এক্সক্লুসিভ সুবিধা পান</p>
+        </div>
+
+        <div class="user-card">
+            <div class="user-avatar" id="user-avatar">U</div>
+            <div class="user-info">
+                <div class="user-name" id="user-name">User</div>
+                <span class="level-badge" id="current-level">Level 0</span>
+            </div>
+        </div>
+
+        <div class="levels-container" id="levels-container">
+            <!-- Levels will be dynamically generated here -->
+        </div>
+
+        <button class="upgrade-button" id="upgrade-button">আপগ্রেড করুন</button>
+    </div>
+
+    <div class="modal" id="upgrade-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modal-title">লেভেল ১ এ আপগ্রেড</div>
+            <p id="modal-description">আপনি লেভেল ১ এ আপগ্রেড করতে চলেছেন। মূল্য: ১০ টাকা</p>
+            <div class="modal-buttons">
+                <button class="modal-button secondary" id="modal-cancel">বাতিল</button>
+                <button class="modal-button primary" id="modal-confirm">নিশ্চিত</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // User data structure
+        let userData = {
+            id: null,
+            firstName: '',
+            lastName: '',
+            username: '',
+            photoUrl: '',
+            currentLevel: 0
+        };
+
+        // Level definitions
+        const levels = [
+            { id: 0, name: "ফ্রি", price: 0, description: "বেসিক এক্সেস" },
+            { id: 1, name: "বিগিনার", price: 10, description: "বেসিক ফিচার আনলক" },
+            { id: 2, name: "ইন্টারমিডিয়েট", price: 25, description: "এক্সট্রা ফিচার" },
+            { id: 3, name: "এডভান্সড", price: 50, description: "প্রিমিয়াম কনটেন্ট" },
+            { id: 4, name: "এক্সপার্ট", price: 100, description: "সকল ফিচার আনলক" },
+            { id: 5, name: "মাস্টার", price: 200, description: "ভিআইপি এক্সেস" }
+        ];
+
+        // DOM Elements
+        const levelsContainer = document.getElementById('levels-container');
+        const upgradeButton = document.getElementById('upgrade-button');
+        const upgradeModal = document.getElementById('upgrade-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDescription = document.getElementById('modal-description');
+        const modalCancel = document.getElementById('modal-cancel');
+        const modalConfirm = document.getElementById('modal-confirm');
+        const userName = document.getElementById('user-name');
+        const userAvatar = document.getElementById('user-avatar');
+        const currentLevel = document.getElementById('current-level');
+
+        // Initialize the app
+        function init() {
+            // Initialize Telegram WebApp
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            
+            // Get user data from Telegram
+            const tgUser = Telegram.WebApp.initDataUnsafe.user;
+            if (tgUser) {
+                userData.id = tgUser.id;
+                userData.firstName = tgUser.first_name;
+                userData.lastName = tgUser.last_name;
+                userData.username = tgUser.username;
+                userData.photoUrl = tgUser.photo_url;
+                
+                // Try to load user data from storage
+                const savedData = localStorage.getItem(`tg_user_${userData.id}`);
+                if (savedData) {
+                    const parsedData = JSON.parse(savedData);
+                    userData.currentLevel = parsedData.currentLevel || 0;
+                }
+                
+                updateUserInterface();
+            }
+            
+            renderLevels();
+            setupEventListeners();
+        }
+
+        // Update user interface with user data
+        function updateUserInterface() {
+            // Set user name
+            const displayName = userData.firstName + (userData.lastName ? ' ' + userData.lastName : '');
+            userName.textContent = displayName;
+            
+            // Set user avatar
+            if (userData.photoUrl) {
+                userAvatar.style.backgroundImage = `url(${userData.photoUrl})`;
+                userAvatar.textContent = '';
+            } else {
+                userAvatar.textContent = userData.firstName.charAt(0);
+            }
+            
+            // Set current level
+            currentLevel.textContent = `Level ${userData.currentLevel}`;
+            
+            // Update upgrade button state
+            if (userData.currentLevel >= 5) {
+                upgradeButton.disabled = true;
+                upgradeButton.textContent = 'আপনি সর্বোচ্চ লেভেল এ রয়েছেন';
+            } else {
+                upgradeButton.disabled = false;
+                upgradeButton.textContent = 'আপগ্রেড করুন';
+            }
+        }
+
+        // Render level cards
+        function renderLevels() {
+            levelsContainer.innerHTML = '';
+            
+            levels.forEach(level => {
+                const levelCard = document.createElement('div');
+                levelCard.className = 'level-card';
+                
+                if (level.id === userData.currentLevel) {
+                    levelCard.classList.add('active');
+                }
+                
+                if (level.id > userData.currentLevel) {
+                    levelCard.classList.add('locked');
+                }
+                
+                levelCard.innerHTML = `
+                    <div class="level-number">${level.id}</div>
+                    <div class="level-name">${level.name}</div>
+                    <div class="level-price">${level.id === 0 ? 'ফ্রি' : `${level.price} টাকা`}</div>
+                `;
+                
+                levelsContainer.appendChild(levelCard);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            upgradeButton.addEventListener('click', showUpgradeModal);
+            modalCancel.addEventListener('click', () => {
+                upgradeModal.style.display = 'none';
+            });
+            
+            modalConfirm.addEventListener('click', confirmUpgrade);
+        }
+
+        // Show upgrade modal
+        function showUpgradeModal() {
+            const nextLevel = userData.currentLevel + 1;
+            if (nextLevel > 5) return;
+            
+            const level = levels.find(l => l.id === nextLevel);
+            if (!level) return;
+            
+            modalTitle.textContent = `লেভেল ${nextLevel} এ আপগ্রেড`;
+            modalDescription.textContent = `আপনি ${level.name} লেভেল এ আপগ্রেড করতে চলেছেন। মূল্য: ${level.price} টাকা`;
+            
+            upgradeModal.style.display = 'flex';
+        }
+
+        // Confirm upgrade (simulated payment)
+        function confirmUpgrade() {
+            const nextLevel = userData.currentLevel + 1;
+            if (nextLevel > 5) return;
+            
+            // In a real app, you would integrate with a payment system here
+            // For demo purposes, we'll just simulate successful payment
+            
+            // Show a simple alert (in a real app, use Telegram.WebApp.showPopup)
+            Telegram.WebApp.showPopup({
+                title: "পেমেন্ট সফল",
+                message: `আপনি সফলভাবে লেভেল ${nextLevel} এ আপগ্রেড করেছেন!`,
+                buttons: [{ type: "ok" }]
+            });
+            
+            // Update user level
+            userData.currentLevel = nextLevel;
+            
+            // Save to localStorage (in a real app, save to your server)
+            localStorage.setItem(`tg_user_${userData.id}`, JSON.stringify({
+                currentLevel: userData.currentLevel
+            }));
+            
+            // Update UI
+            updateUserInterface();
+            renderLevels();
+            
+            // Close modal
+            upgradeModal.style.display = 'none';
+            
+            // In a real app, you might want to send data to your server here
+            console.log(`User ${userData.id} upgraded to level ${nextLevel}`);
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
